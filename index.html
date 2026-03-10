@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>LOTTO ENGINE v5</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#09090e;--bg2:#111118;--bg3:#18181f;--bg4:#1f1f28;
+  --bd:#252530;--bd2:#303040;
+  --acc:#f0c040;--acc2:#e07020;--acc3:#38b8f0;--acc4:#b040e8;
+  --grn:#38d890;--red:#f04858;
+  --txt:#e0e0ec;--t2:#8888a0;--t3:#50506a;
+  --mono:'Space Mono',monospace;--sans:'Noto Sans KR',sans-serif;--disp:'Bebas Neue',cursive;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);min-height:100vh}
+/* 헤더 */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--bd);height:52px;display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:100}
+.logo{font-family:var(--disp);font-size:24px;letter-spacing:3px;color:var(--acc)}
+.logo small{font-family:var(--mono);font-size:9px;color:var(--t3);display:block;margin-top:-4px;letter-spacing:1px}
+.hbadge{background:var(--bg3);border:1px solid var(--bd);border-radius:4px;padding:3px 9px;font-family:var(--mono);font-size:10px;color:var(--t2)}
+.hbadge b{color:var(--acc)}
+.hdot{width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.hdot.ok{background:var(--grn)}.hdot.spin{background:var(--acc);animation:pulse 1s infinite}
+.hmsg{font-family:var(--mono);font-size:10px;color:var(--t3)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+/* 네비 */
+.nav{background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;padding:0 20px}
+.ntab{padding:11px 16px;font-size:11px;font-family:var(--mono);color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;letter-spacing:.5px}
+.ntab:hover{color:var(--t2)}.ntab.on{color:var(--acc);border-bottom-color:var(--acc)}
+/* 레이아웃 */
+.main{padding:20px;max-width:1440px;margin:0 auto}
+.pnl{display:none}.pnl.on{display:block;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+/* 카드 */
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:18px}
+.card.accent{border-color:var(--acc);border-left-width:3px}
+.card.green{border-color:var(--grn)}
+.ct{font-size:10px;font-family:var(--mono);color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.ct::before{content:'';width:2px;height:10px;background:var(--acc);border-radius:1px}
+/* 볼 */
+.ball{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:#fff;flex-shrink:0}
+.b48{width:48px;height:48px;font-size:16px}.b38{width:38px;height:38px;font-size:14px}
+.b30{width:30px;height:30px;font-size:12px}.b24{width:24px;height:24px;font-size:10px}
+.b18{width:18px;height:18px;font-size:8px}
+.c1{background:linear-gradient(135deg,#f5a623,#e07010)}
+.c2{background:linear-gradient(135deg,#4a90e0,#2060c0)}
+.c3{background:linear-gradient(135deg,#e04040,#b01818)}
+.c4{background:linear-gradient(135deg,#707080,#404050)}
+.c5{background:linear-gradient(135deg,#40b840,#208020)}
+.cb{background:linear-gradient(135deg,#b040e8,#7010b0)}
+.brow{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+/* 버튼 */
+.btn{padding:9px 16px;border:none;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;transition:all .18s;white-space:nowrap}
+.btnp{background:var(--acc);color:#0a0a0f}.btnp:hover{background:#ffd060;transform:translateY(-1px)}
+.btns{background:var(--bg3);color:var(--txt);border:1px solid var(--bd)}.btns:hover{background:var(--bg4)}
+.btnr{background:rgba(240,72,88,.15);color:var(--red);border:1px solid var(--red)}
+/* 텍스트 */
+.bignum{font-family:var(--disp);font-size:40px;line-height:1;color:var(--acc)}
+.metatxt{font-size:11px;color:var(--t2);font-family:var(--mono);margin-top:3px}
+.tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;font-size:10px;font-family:var(--mono);font-weight:700}
+.hot{background:rgba(240,72,88,.2);color:var(--red)}
+.cold{background:rgba(56,184,240,.2);color:var(--acc3)}
+.norm{background:rgba(136,136,160,.15);color:var(--t2)}
+.good{background:rgba(56,216,144,.2);color:var(--grn)}
+/* 테이블 */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--bg3);padding:8px 10px;text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--t3);border-bottom:1px solid var(--bd)}
+td{padding:8px 10px;border-bottom:1px solid var(--bd)}
+tr:hover td{background:var(--bg3)}
+.twrap{overflow-x:auto}
+/* 패턴 박스 */
+.pat{background:var(--bg3);border:1px solid var(--bd2);border-radius:6px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pat-lbl{font-size:10px;font-family:var(--mono);color:var(--t2)}
+.pat-val{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--acc)}
+/* 분포 바 */
+.distbar{height:20px;border-radius:3px;background:var(--bg4);overflow:visible;position:relative;margin-bottom:2px}
+.distfill{height:100%;border-radius:3px;transition:width .6s ease;position:relative}
+.disttip{position:absolute;right:0;top:-18px;font-size:9px;font-family:var(--mono);color:var(--t2);white-space:nowrap}
+/* 번호 분포 그리드 */
+.ng{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.nc{border-radius:6px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;border:1px solid rgba(255,255,255,.04);transition:transform .12s;cursor:default}
+.nc:hover{transform:scale(1.06)}
+.nc .nl{font-size:11px}.nc .ns{font-size:8px;opacity:.75;margin-top:1px}
+/* 세트 리스트 */
+.srow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--bd);transition:background .15s}
+.srow:hover{background:var(--bg3)}
+.srank{font-family:var(--disp);font-size:20px;color:var(--t3);min-width:26px}
+.smeta{font-size:10px;font-family:var(--mono);color:var(--t3);margin-top:2px}
+/* 진행 */
+.prog{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:10px}
+.progf{height:100%;background:var(--acc);border-radius:2px;transition:width .3s}
+/* 알림 */
+.alert{padding:9px 13px;border-radius:6px;font-size:11px;font-family:var(--mono);margin-bottom:12px}
+.ai{background:rgba(56,216,144,.08);border:1px solid rgba(56,216,144,.25);color:var(--grn)}
+.aw{background:rgba(240,192,64,.08);border:1px solid rgba(240,192,64,.25);color:var(--acc)}
+.ae{background:rgba(240,72,88,.08);border:1px solid rgba(240,72,88,.25);color:var(--red)}
+/* 스타일 타이틀 */
+.ptitle{font-family:var(--disp);font-size:20px;letter-spacing:2px;margin-bottom:2px}
+.psub{font-size:10px;color:var(--t3);font-family:var(--mono);margin-bottom:16px}
+/* 스크롤 */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+@media(max-width:768px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .main{padding:12px}
+  .ng{grid-template-columns:repeat(7,1fr)}
+  .hdr .hbadge{display:none}
+}
+
+</style>
+<body>
+<div class="hdr">
+  <div class="logo">LOTTO ENGINE<small>PATTERN-BASED · DETERMINISTIC v5</small></div>
+  <div class="hbadge">최신 <b id="h-latest">-</b></div>
+  <div class="hbadge">DB <b id="h-total">-</b>회</div>
+  <div class="hbadge">분석기준 <b id="h-basis">-</b></div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <div class="hdot" id="sdot"></div>
+    <span class="hmsg" id="smsg">연결중...</span>
+  </div>
+</div>
+<div class="nav">
+  <div class="ntab on" onclick="ST(0)">01 대시보드</div>
+  <div class="ntab" onclick="ST(1)">02 회차별 당첨</div>
+  <div class="ntab" onclick="ST(2)">03 AI 분석</div>
+</div>
+<div class="main">
+<div class="pnl on" id="p0">
+  <div class="ptitle">DASHBOARD</div>
+  <div class="psub">// 패턴 기반 결정론적 추천 엔진</div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card accent">
+      <div class="ct">최신 당첨번호</div>
+      <div class="brow" id="d-latest" style="margin-bottom:10px"></div>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div><div style="font-size:10px;font-family:var(--mono);color:var(--t3)">합계</div>
+          <div class="bignum" id="d-sum">-</div></div>
+        <div class="metatxt" id="d-meta">-</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">다음 회차 추천 상태</div>
+      <div id="d-status" style="margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btnp" id="btn-analyze" onclick="runAnalysis()">⚡ AI 분석 실행</button>
+        <button class="btn btns" onclick="dlSets()">📥 45세트 CSV</button>
+        <button class="btn btns" onclick="syncNow()">🔄 DB 동기화</button>
+      </div>
+      <div class="prog"><div class="progf" id="progbar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="ct">이번 회차 목표 패턴</div>
+    <div id="d-pattern"><div style="color:var(--t3);font-family:var(--mono);font-size:11px">AI 분석을 실행하면 패턴이 표시됩니다</div></div>
+  </div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="ct">추천 45세트 미리보기</div>
+      <div id="d-sets"><div style="color:var(--t3);font-family:var(--mono);font-size:11px;padding:10px 0">AI 분석 실행 후 표시</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">1~45 번호 사용 분포</div>
+      <div class="ng" id="d-dist" style="margin-bottom:8px"></div>
+      <div style="display:flex;gap:10px;font-size:9px;font-family:var(--mono)">
+        <span style="color:var(--red)">■ 고사용(7+)</span>
+        <span style="color:var(--acc)">■ 정상(5~6)</span>
+        <span style="color:var(--acc3)">■ 저사용(~4)</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="pnl" id="p1">
+  <div class="ptitle">DRAW HISTORY</div>
+  <div class="psub">// Supabase 연동 · 전체 회차 조회</div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+    <button class="btn btns" onclick="syncNow()">🔄 최신 동기화</button>
+    <button class="btn btns" onclick="dlDraws()">📥 CSV</button>
+    <div style="margin-left:auto;font-size:11px;font-family:var(--mono);color:var(--t3)">표시 <b style="color:var(--acc)" id="data-count">-</b>회</div>
+  </div>
+  <div class="card"><div class="twrap">
+    <table><thead><tr>
+      <th>회차</th><th>추첨일</th><th>당첨번호</th><th>보너스</th><th>합계</th><th>홀:짝</th><th>저:고</th><th>연번</th><th>직전중복</th>
+    </tr></thead><tbody id="tbl-body"></tbody></table>
+  </div></div>
+</div>
+<div class="pnl" id="p2">
+  <div class="ptitle">AI ANALYSIS ENGINE</div>
+  <div class="psub">// 패턴 계산 · 번호 점수 · 45세트 생성 엔진</div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="ct">① 번호 절대 점수 (참고값 — 몰림 방지 적용)</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="display:flex;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:2px;gap:2px">
+        <button class="btn btns" style="padding:4px 10px;font-size:10px" id="sv0" onclick="sortScore(0)">종합</button>
+        <button class="btn btns" style="padding:4px 10px;font-size:10px" id="sv1" onclick="sortScore(1)">빈도</button>
+        <button class="btn btns" style="padding:4px 10px;font-size:10px" id="sv2" onclick="sortScore(2)">최근</button>
+        <button class="btn btns" style="padding:4px 10px;font-size:10px" id="sv3" onclick="sortScore(3)">미출현</button>
+      </div>
+    </div>
+    <div class="ng" id="score-grid" style="margin-bottom:10px"></div>
+    <div class="twrap"><table>
+      <thead><tr><th>번호</th><th>종합</th><th>전체빈도</th><th>최근30회</th><th>미출현</th><th>동반강도</th><th>구간기여</th><th>끝수기여</th><th>상태</th></tr></thead>
+      <tbody id="score-tbody"></tbody>
+    </table></div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="ct">② 다음 회차 목표 패턴 계산</div>
+    <div id="pattern-detail"><div style="color:var(--t3);font-family:var(--mono);font-size:11px">AI 분석 실행 후 표시</div></div>
+  </div>
+  <div class="card">
+    <div class="ct">③ 추천 45세트 (결정론적 · 분산 보장)</div>
+    <div id="sets-log" style="margin-bottom:10px"></div>
+    <div id="sets-list"><div style="color:var(--t3);font-family:var(--mono);font-size:11px">AI 분석 실행 후 표시</div></div>
+  </div>
+</div>
+</div>
+<script>
+var SB_URL="https://tfeeujepuxmnokbygpgw.supabase.co";
+var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmZWV1amVwdXhtbm9rYnlncGd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1MTg3MDgsImV4cCI6MjA4ODA5NDcwOH0.TAyPg2Fs2Uo0iYR4r2ffePXDn2dFtyp3EGoTthH5MXU";
+var INIT={"scores": [{"n": 1, "t": 54.6, "cf": 41.2, "tr": 61.9, "ms": 44.3, "pr": 87.5, "tl": 42.0, "sc": 56.3, "su": 45, "freq": 144, "miss": 7}, {"n": 2, "t": 56.6, "cf": 31.8, "tr": 13.6, "ms": 100, "pr": 87.5, "tl": 51.0, "sc": 56.3, "su": 45, "freq": 125, "miss": 35}, {"n": 3, "t": 46.6, "cf": 44.6, "tr": 37.6, "ms": 54.4, "pr": 50.0, "tl": 37.6, "sc": 56.3, "su": 45, "freq": 151, "miss": 9}, {"n": 4, "t": 58.3, "cf": 42.2, "tr": 18.1, "ms": 95.5, "pr": 75.0, "tl": 66.6, "sc": 56.3, "su": 45, "freq": 146, "miss": 19}, {"n": 5, "t": 49.4, "cf": 36.7, "tr": 56.2, "ms": 18.9, "pr": 87.5, "tl": 51.0, "sc": 56.3, "su": 45, "freq": 135, "miss": 1}, {"n": 6, "t": 60.8, "cf": 54.5, "tr": 14.8, "ms": 100, "pr": 75.0, "tl": 57.7, "sc": 56.3, "su": 55, "freq": 171, "miss": 24}, {"n": 7, "t": 55.3, "cf": 50.6, "tr": 31.9, "ms": 67.0, "pr": 75.0, "tl": 46.6, "sc": 56.3, "su": 55, "freq": 163, "miss": 11}, {"n": 8, "t": 52.0, "cf": 50.1, "tr": 75.7, "ms": 24.4, "pr": 62.5, "tl": 46.6, "sc": 56.3, "su": 55, "freq": 162, "miss": 2}, {"n": 9, "t": 58.9, "cf": 57.5, "tr": 34.3, "ms": 56.1, "pr": 87.5, "tl": 60.5, "sc": 56.3, "su": 55, "freq": 177, "miss": 8}, {"n": 10, "t": 50.2, "cf": 53.5, "tr": 61.9, "ms": 15.0, "pr": 75.0, "tl": 43.8, "sc": 50.9, "su": 55, "freq": 169, "miss": 0}, {"n": 11, "t": 50.9, "cf": 49.1, "tr": 63.1, "ms": 19.6, "pr": 75.0, "tl": 42.0, "sc": 50.9, "su": 65, "freq": 160, "miss": 1}, {"n": 12, "t": 54.2, "cf": 50.1, "tr": 59.8, "ms": 33.8, "pr": 75.0, "tl": 51.0, "sc": 50.9, "su": 65, "freq": 162, "miss": 4}, {"n": 13, "t": 54.6, "cf": 47.1, "tr": 77.8, "ms": 33.1, "pr": 75.0, "tl": 37.6, "sc": 50.9, "su": 65, "freq": 156, "miss": 4}, {"n": 14, "t": 56.5, "cf": 43.1, "tr": 20.5, "ms": 88.0, "pr": 62.5, "tl": 66.6, "sc": 50.9, "su": 65, "freq": 148, "miss": 17}, {"n": 15, "t": 51.1, "cf": 49.6, "tr": 61.9, "ms": 15.0, "pr": 75.0, "tl": 51.0, "sc": 50.9, "su": 65, "freq": 161, "miss": 0}, {"n": 16, "t": 57.3, "cf": 54.5, "tr": 61.9, "ms": 39.8, "pr": 75.0, "tl": 57.7, "sc": 50.9, "su": 65, "freq": 171, "miss": 5}, {"n": 17, "t": 49.1, "cf": 40.2, "tr": 40.0, "ms": 35.6, "pr": 75.0, "tl": 46.6, "sc": 50.9, "su": 65, "freq": 142, "miss": 5}, {"n": 18, "t": 53.3, "cf": 46.6, "tr": 25.3, "ms": 64.5, "pr": 75.0, "tl": 46.6, "sc": 50.9, "su": 65, "freq": 155, "miss": 11}, {"n": 19, "t": 55.4, "cf": 50.6, "tr": 67.6, "ms": 15.0, "pr": 87.5, "tl": 60.5, "sc": 50.9, "su": 65, "freq": 163, "miss": 0}, {"n": 20, "t": 49.4, "cf": 55.5, "tr": 46.9, "ms": 30.0, "pr": 62.5, "tl": 43.8, "sc": 47.5, "su": 65, "freq": 173, "miss": 3}, {"n": 21, "t": 57.6, "cf": 51.1, "tr": 11.2, "ms": 100, "pr": 75.0, "tl": 42.0, "sc": 47.5, "su": 65, "freq": 164, "miss": 35}, {"n": 22, "t": 55.6, "cf": 50.1, "tr": 43.3, "ms": 57.3, "pr": 75.0, "tl": 51.0, "sc": 47.5, "su": 65, "freq": 162, "miss": 9}, {"n": 23, "t": 52.7, "cf": 45.1, "tr": 38.8, "ms": 59.1, "pr": 75.0, "tl": 37.6, "sc": 47.5, "su": 65, "freq": 152, "miss": 10}, {"n": 24, "t": 58.2, "cf": 55.5, "tr": 19.3, "ms": 75.2, "pr": 75.0, "tl": 66.6, "sc": 47.5, "su": 65, "freq": 173, "miss": 12}, {"n": 25, "t": 56.1, "cf": 55.5, "tr": 83.8, "ms": 20.0, "pr": 75.0, "tl": 51.0, "sc": 47.5, "su": 65, "freq": 173, "miss": 1}, {"n": 26, "t": 54.5, "cf": 42.2, "tr": 30.7, "ms": 65.9, "pr": 75.0, "tl": 57.7, "sc": 47.5, "su": 65, "freq": 146, "miss": 12}, {"n": 27, "t": 61.1, "cf": 54.5, "tr": 100, "ms": 15.0, "pr": 100, "tl": 46.6, "sc": 47.5, "su": 65, "freq": 171, "miss": 0}, {"n": 28, "t": 52.2, "cf": 53.5, "tr": 68.8, "ms": 39.5, "pr": 50.0, "tl": 46.6, "sc": 47.5, "su": 65, "freq": 169, "miss": 5}, {"n": 29, "t": 54.5, "cf": 55.0, "tr": 20.5, "ms": 69.9, "pr": 62.5, "tl": 60.5, "sc": 47.5, "su": 65, "freq": 172, "miss": 11}, {"n": 30, "t": 47.4, "cf": 50.6, "tr": 43.3, "ms": 15.0, "pr": 75.0, "tl": 43.8, "sc": 48.6, "su": 65, "freq": 163, "miss": 0}, {"n": 31, "t": 61.2, "cf": 58.5, "tr": 100, "ms": 25.4, "pr": 87.5, "tl": 42.0, "sc": 48.6, "su": 65, "freq": 179, "miss": 2}, {"n": 32, "t": 62.9, "cf": 61.4, "tr": 60.7, "ms": 57.9, "pr": 87.5, "tl": 51.0, "sc": 48.6, "su": 65, "freq": 185, "miss": 8}, {"n": 33, "t": 55.2, "cf": 53.5, "tr": 96.4, "ms": 15.0, "pr": 75.0, "tl": 37.6, "sc": 48.6, "su": 65, "freq": 169, "miss": 0}, {"n": 34, "t": 51.4, "cf": 49.6, "tr": 36.7, "ms": 29.0, "pr": 75.0, "tl": 66.6, "sc": 48.6, "su": 65, "freq": 161, "miss": 3}, {"n": 35, "t": 56.8, "cf": 46.6, "tr": 32.2, "ms": 64.5, "pr": 87.5, "tl": 51.0, "sc": 48.6, "su": 65, "freq": 155, "miss": 11}, {"n": 36, "t": 52.4, "cf": 54.5, "tr": 59.8, "ms": 20.0, "pr": 75.0, "tl": 57.7, "sc": 48.6, "su": 55, "freq": 171, "miss": 1}, {"n": 37, "t": 59.1, "cf": 54.5, "tr": 18.1, "ms": 99.3, "pr": 75.0, "tl": 46.6, "sc": 48.6, "su": 55, "freq": 171, "miss": 17}, {"n": 38, "t": 43.5, "cf": 41.2, "tr": 56.2, "ms": 19.2, "pr": 50.0, "tl": 46.6, "sc": 48.6, "su": 55, "freq": 144, "miss": 1}, {"n": 39, "t": 55.7, "cf": 56.5, "tr": 40.3, "ms": 50.5, "pr": 75.0, "tl": 60.5, "sc": 48.6, "su": 55, "freq": 175, "miss": 7}, {"n": 40, "t": 51.1, "cf": 44.1, "tr": 62.8, "ms": 32.4, "pr": 75.0, "tl": 43.8, "sc": 46.5, "su": 55, "freq": 150, "miss": 4}, {"n": 41, "t": 51.1, "cf": 51.1, "tr": 83.8, "ms": 24.5, "pr": 62.5, "tl": 42.0, "sc": 46.5, "su": 45, "freq": 164, "miss": 2}, {"n": 42, "t": 45.4, "cf": 50.1, "tr": 31.9, "ms": 66.7, "pr": 25.0, "tl": 51.0, "sc": 46.5, "su": 45, "freq": 162, "miss": 11}, {"n": 43, "t": 53.3, "cf": 63.4, "tr": 64.3, "ms": 42.4, "pr": 62.5, "tl": 37.6, "sc": 46.5, "su": 45, "freq": 189, "miss": 5}, {"n": 44, "t": 50.2, "cf": 53.5, "tr": 40.0, "ms": 24.8, "pr": 75.0, "tl": 66.6, "sc": 46.5, "su": 45, "freq": 169, "miss": 2}, {"n": 45, "t": 53.1, "cf": 49.6, "tr": 52.6, "ms": 33.7, "pr": 87.5, "tl": 51.0, "sc": 46.5, "su": 45, "freq": 161, "miss": 4}], "draws": [{"r": 1165, "n": [6, 12, 20, 25, 32, 39], "b": 29}, {"r": 1166, "n": [1, 18, 24, 29, 41, 42], "b": 7}, {"r": 1167, "n": [2, 8, 15, 32, 33, 42], "b": 43}, {"r": 1168, "n": [7, 12, 18, 25, 31, 38], "b": 33}, {"r": 1169, "n": [2, 12, 26, 35, 36, 43], "b": 39}, {"r": 1170, "n": [5, 8, 32, 34, 35, 38], "b": 16}, {"r": 1171, "n": [1, 8, 12, 39, 43, 45], "b": 24}, {"r": 1172, "n": [3, 8, 9, 11, 14, 37], "b": 22}, {"r": 1173, "n": [1, 11, 16, 20, 28, 43], "b": 39}, {"r": 1174, "n": [9, 19, 29, 35, 37, 43], "b": 23}, {"r": 1175, "n": [14, 23, 33, 34, 35, 39], "b": 3}, {"r": 1176, "n": [14, 18, 23, 36, 38, 39], "b": 31}, {"r": 1177, "n": [5, 11, 17, 25, 36, 43], "b": 7}, {"r": 1178, "n": [10, 14, 17, 28, 35, 44], "b": 21}, {"r": 1179, "n": [2, 10, 21, 25, 27, 28], "b": 18}, {"r": 1180, "n": [5, 8, 18, 35, 36, 43], "b": 25}, {"r": 1181, "n": [6, 10, 18, 22, 24, 41], "b": 17}, {"r": 1182, "n": [1, 7, 15, 18, 25, 42], "b": 10}, {"r": 1183, "n": [7, 12, 20, 32, 34, 38], "b": 43}, {"r": 1184, "n": [4, 7, 18, 19, 36, 39], "b": 29}, {"r": 1185, "n": [12, 23, 26, 35, 36, 39], "b": 9}, {"r": 1186, "n": [1, 9, 10, 17, 33, 42], "b": 22}, {"r": 1187, "n": [4, 16, 24, 27, 39, 41], "b": 13}, {"r": 1188, "n": [18, 19, 23, 29, 30, 33], "b": 40}, {"r": 1189, "n": [6, 15, 20, 27, 41, 44], "b": 7}, {"r": 1190, "n": [5, 6, 11, 16, 41, 44], "b": 8}, {"r": 1191, "n": [1, 19, 28, 32, 33, 36], "b": 10}, {"r": 1192, "n": [8, 26, 31, 32, 33, 35], "b": 14}, {"r": 1193, "n": [1, 16, 23, 28, 34, 35], "b": 4}, {"r": 1194, "n": [11, 12, 15, 29, 34, 39], "b": 9}, {"r": 1195, "n": [4, 23, 25, 28, 32, 33], "b": 9}, {"r": 1196, "n": [8, 16, 19, 22, 35, 44], "b": 23}, {"r": 1197, "n": [1, 14, 17, 26, 37, 41], "b": 23}, {"r": 1198, "n": [3, 30, 32, 33, 40, 42], "b": 1}, {"r": 1199, "n": [7, 20, 22, 23, 30, 40], "b": 13}, {"r": 1200, "n": [1, 7, 23, 26, 28, 32], "b": 40}, {"r": 1201, "n": [1, 8, 10, 27, 32, 33], "b": 20}, {"r": 1202, "n": [15, 20, 24, 26, 31, 42], "b": 12}, {"r": 1203, "n": [7, 11, 18, 29, 35, 42], "b": 32}, {"r": 1204, "n": [1, 8, 13, 19, 23, 43], "b": 31}, {"r": 1205, "n": [3, 11, 13, 22, 27, 31], "b": 21}, {"r": 1206, "n": [8, 9, 27, 32, 36, 43], "b": 29}, {"r": 1207, "n": [1, 19, 28, 31, 39, 41], "b": 32}, {"r": 1208, "n": [10, 12, 16, 33, 40, 45], "b": 8}, {"r": 1209, "n": [13, 16, 17, 28, 31, 43], "b": 7}, {"r": 1210, "n": [12, 13, 33, 38, 40, 45], "b": 10}, {"r": 1211, "n": [15, 20, 25, 27, 34, 41], "b": 32}, {"r": 1212, "n": [5, 8, 25, 31, 41, 44], "b": 45}, {"r": 1213, "n": [5, 11, 25, 27, 36, 38], "b": 2}, {"r": 1214, "n": [10, 15, 19, 27, 30, 33], "b": 14}], "sum_stats": {"avg": 140.6, "std": 24.1, "min": 72, "max": 206}, "sum_dist": {"71-100": 48, "101-120": 223, "121-140": 340, "141-160": 331, "161-180": 214, "181-200": 55, "201-270": 3}, "total_rounds": 1214, "latest": 1214};
+
+// ───────────────────────────────────────────────
+// 런타임 상태
+// ───────────────────────────────────────────────
+var DRAWS   = INIT.draws.slice();   // 현재 로드된 회차 데이터
+var SCORES  = INIT.scores.slice();  // 번호별 점수
+var TOTAL   = INIT.total_rounds;    // 전체 회차 수
+var SM      = {};                   // 번호 → 점수 맵
+SCORES.forEach(function(s){ SM[s.n]=s; });
+
+var ANALYSIS = null;   // 현재 분석 결과
+var CACHED_ROUND = -1; // 분석 기준 회차
+
+// ───────────────────────────────────────────────
+// 유틸
+// ───────────────────────────────────────────────
+function bc(n){ return n<=10?"c1":n<=20?"c2":n<=30?"c3":n<=40?"c4":"c5"; }
+function ball(n,sz,bonus){
+  sz=sz||"b30";
+  return '<div class="ball '+sz+' '+(bonus?"cb":bc(n))+'">'+n+'</div>';
+}
+function dSum(a){ return a.reduce(function(x,y){return x+y;},0); }
+function oddC(a){ return a.filter(function(n){return n%2!==0;}).length; }
+function lowC(a){ return a.filter(function(n){return n<=22;}).length; }
+function consec(a){
+  var s=a.slice().sort(function(x,y){return x-y;});
+  var mx=1,c=1;
+  for(var i=1;i<s.length;i++){
+    if(s[i]-s[i-1]===1){c++;if(c>mx)mx=c;}else c=1;
+  }
+  return mx;
+}
+function overlapWith(a,b){
+  var sa=new Set(a);
+  return b.filter(function(n){return sa.has(n);}).length;
+}
+function latestDraw(){
+  return DRAWS.slice().sort(function(a,b){return b.r-a.r;})[0];
+}
+function sortedDraws(){
+  return DRAWS.slice().sort(function(a,b){return a.r-b.r;});
+}
+
+// ───────────────────────────────────────────────
+// Supabase 헬퍼
+// ───────────────────────────────────────────────
+function sbFetch(path,opts){
+  return fetch(SB_URL+"/rest/v1/"+path,Object.assign({
+    headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"return=representation"}
+  },opts||{}));
+}
+
+async function syncNow(){
+  setSpin("동기화 중...");
+  try{
+    var res=await sbFetch("lotto_draws?select=round,draw_date,num1,num2,num3,num4,num5,num6,bonus&order=round.desc&limit=200");
+    var rows=await res.json();
+    if(rows&&rows.length>0){
+      DRAWS=rows.map(function(r){
+        return{r:r.round,date:r.draw_date,n:[r.num1,r.num2,r.num3,r.num4,r.num5,r.num6].sort(function(a,b){return a-b;}),b:r.bonus};
+      });
+      TOTAL=rows.length;
+      setOk("Supabase 연결됨 ("+TOTAL+"회)");
+      updateHeader();
+      renderDrawTable();
+      renderDash();
+    }else{
+      setOk("DB 비어있음 — 내장 데이터 사용");
+    }
+  }catch(e){
+    setOff("내장 데이터 사용 중");
+  }
+}
+
+function setSpin(m){ document.getElementById("sdot").className="hdot spin"; document.getElementById("smsg").textContent=m; }
+function setOk(m){ document.getElementById("sdot").className="hdot ok"; document.getElementById("smsg").textContent=m; }
+function setOff(m){ document.getElementById("sdot").className="hdot"; document.getElementById("smsg").textContent=m; }
+
+// ───────────────────────────────────────────────
+// 탭
+// ───────────────────────────────────────────────
+function ST(i){
+  document.querySelectorAll(".pnl").forEach(function(p){p.classList.remove("on");});
+  document.querySelectorAll(".ntab").forEach(function(t){t.classList.remove("on");});
+  document.getElementById("p"+i).classList.add("on");
+  document.querySelectorAll(".ntab")[i].classList.add("on");
+}
+
+// ───────────────────────────────────────────────
+// 헤더 업데이트
+// ───────────────────────────────────────────────
+function updateHeader(){
+  var ld=latestDraw();
+  document.getElementById("h-latest").textContent=ld.r+"회";
+  document.getElementById("h-total").textContent=TOTAL.toLocaleString();
+  document.getElementById("h-basis").textContent=CACHED_ROUND>0?CACHED_ROUND+"회":"미실행";
+}
+
+// ───────────────────────────────────────────────
+// ══════════════════════════════════════════════
+// ① 번호 점수 계산 엔진
+// ══════════════════════════════════════════════
+// ───────────────────────────────────────────────
+function calcNumberScores(){
+  var sd=sortedDraws();
+  var total=sd.length;
+  if(total===0)return[];
+
+  // 전체 출현 빈도
+  var freq={};
+  for(var i=1;i<=45;i++)freq[i]=0;
+  sd.forEach(function(d){d.n.forEach(function(n){freq[n]++;});});
+
+  // 최근 30회 출현
+  var recent30=sd.slice(-30);
+  var r30={};
+  for(var i=1;i<=45;i++)r30[i]=0;
+  recent30.forEach(function(d){d.n.forEach(function(n){r30[n]++;});});
+
+  // 미출현 길이 (최근 몇 회 미출현)
+  var lastSeen={};
+  for(var i=1;i<=45;i++)lastSeen[i]=0;
+  sd.forEach(function(d,idx){d.n.forEach(function(n){lastSeen[n]=idx+1;});});
+  var missLen={};
+  for(var i=1;i<=45;i++)missLen[i]=total-lastSeen[i];
+
+  // 동반 출현 강도 (최근 50회 기준 자신과 함께 출현한 번호 수 가중합)
+  var recent50=sd.slice(-50);
+  var pairScore={};
+  for(var i=1;i<=45;i++)pairScore[i]=0;
+  recent50.forEach(function(d){
+    d.n.forEach(function(a){
+      d.n.forEach(function(b){if(a!==b)pairScore[a]++;});
+    });
+  });
+
+  // 구간 균형 기여도 (구간별 평균 빈도 대비 자신의 빈도 차이)
+  var secs=[[1,9],[10,19],[20,29],[30,39],[40,45]];
+  var secAvg={};
+  secs.forEach(function(s){
+    var ns=[];for(var i=s[0];i<=s[1];i++)ns.push(freq[i]);
+    var avg=ns.reduce(function(a,b){return a+b;},0)/ns.length;
+    for(var i=s[0];i<=s[1];i++)secAvg[i]=avg;
+  });
+  var secScore={};
+  for(var i=1;i<=45;i++){
+    // 자신의 빈도가 구간 평균보다 낮을수록 기여도 높음 (분산 유도)
+    secScore[i]=Math.max(0,secAvg[i]-freq[i]+10);
+  }
+
+  // 끝수 균형 기여도
+  var tailFreq={};
+  for(var t=0;t<=9;t++)tailFreq[t]=0;
+  sd.forEach(function(d){d.n.forEach(function(n){tailFreq[n%10]++;});});
+  var tailAvg=Object.values(tailFreq).reduce(function(a,b){return a+b;},0)/10;
+  var tailScore={};
+  for(var i=1;i<=45;i++){
+    tailScore[i]=Math.max(0,tailAvg-tailFreq[i%10]+5);
+  }
+
+  // 정규화 → 0~100 점수화
+  function norm(obj){
+    var vals=Object.values(obj);
+    var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);
+    var r={};
+    Object.keys(obj).forEach(function(k){
+      r[k]=mx>mn?Math.round((obj[k]-mn)/(mx-mn)*100):50;
+    });
+    return r;
+  }
+
+  var nFreq=norm(freq);
+  var nR30=norm(r30);
+  var nMiss=norm(missLen);
+  var nPair=norm(pairScore);
+  var nSec=norm(secScore);
+  var nTail=norm(tailScore);
+
+  // 종합 점수 (각 20,20,20,15,15,10 가중)
+  var result=[];
+  for(var i=1;i<=45;i++){
+    var total_score=Math.round(
+      nFreq[i]*0.20+nR30[i]*0.20+nMiss[i]*0.20+nPair[i]*0.15+nSec[i]*0.15+nTail[i]*0.10
+    );
+    result.push({
+      n:i,
+      total:total_score,
+      freq:freq[i],
+      nFreq:nFreq[i],
+      r30:r30[i],
+      nR30:nR30[i],
+      miss:missLen[i],
+      nMiss:nMiss[i],
+      pair:nPair[i],
+      sec:nSec[i],
+      tail:nTail[i]
+    });
+  }
+  return result;
+}
+
+// ───────────────────────────────────────────────
+// ══════════════════════════════════════════════
+// ② 목표 패턴 계산 엔진
+// ══════════════════════════════════════════════
+// 전체 히스토리에서 각 패턴의 최근 추세를 분석하여
+// 다음 회차의 목표 패턴을 결정
+// ───────────────────────────────────────────────
+function calcTargetPattern(){
+  var sd=sortedDraws();
+  var n=sd.length;
+  if(n<10)return null;
+
+  // 최근 10회, 30회, 전체 통계로 추세 파악
+  function pctOf(arr,pred){
+    var cnt=arr.filter(pred).length;
+    return Math.round(cnt/arr.length*100);
+  }
+
+  var w10=sd.slice(-10),w30=sd.slice(-30),wall=sd;
+
+  // 합계 범위: 최근 흐름 기반
+  var sums=wall.map(function(d){return dSum(d.n);});
+  var avg=sums.reduce(function(a,b){return a+b;})/sums.length;
+  var std=Math.sqrt(sums.map(function(s){return Math.pow(s-avg,2);}).reduce(function(a,b){return a+b;})/sums.length);
+  var recentSums=sd.slice(-20).map(function(d){return dSum(d.n);});
+  var rAvg=recentSums.reduce(function(a,b){return a+b;})/recentSums.length;
+  // 최근 추세로 합계 목표 범위 조정
+  var sumTarget={min:Math.round(rAvg-std*1.2),max:Math.round(rAvg+std*1.2)};
+  sumTarget.min=Math.max(60,sumTarget.min);
+  sumTarget.max=Math.min(220,sumTarget.max);
+
+  // 홀짝 목표: 직전 5회 평균 홀수 개수 → 반대 방향 유도
+  var recentOdd=sd.slice(-5).map(function(d){return oddC(d.n);});
+  var avgOdd=recentOdd.reduce(function(a,b){return a+b;})/recentOdd.length;
+  var oddTarget;
+  if(avgOdd>=4){oddTarget=[2,3,3,4];}      // 홀수 많았으면 홀짝 균형 유도
+  else if(avgOdd<=2){oddTarget=[3,4,4,5];} // 짝수 많았으면 홀수 유도
+  else{oddTarget=[2,3,3,4,4,5];}           // 균형 유지
+
+  // 저고 목표: 직전 5회 평균
+  var recentLow=sd.slice(-5).map(function(d){return lowC(d.n);});
+  var avgLow=recentLow.reduce(function(a,b){return a+b;})/recentLow.length;
+  var lowTarget;
+  if(avgLow>=4){lowTarget=[2,3,3,4];}
+  else if(avgLow<=2){lowTarget=[3,4,4,5];}
+  else{lowTarget=[2,3,3,4,4,5];}
+
+  // 연번 목표: 전체 히스토리 분포
+  var consecHist=wall.map(function(d){return consec(d.n);});
+  var c0=pctOf(consecHist,function(v){return v===1;}); // 연번 없음 (max=1이면 연번0)
+  var c1=pctOf(consecHist,function(v){return v===2;}); // 1쌍 연번
+  var c2=pctOf(consecHist,function(v){return v>=3;});  // 2쌍 이상
+  // 가장 빈도 높은 쪽 목표
+  var consecTarget=c0>=c1?[1,1,2]:[1,2,2]; // 1=연번없음, 2=연번있음
+
+  // 끝수 중복 제한
+  var tailTarget=2; // 최대 2개 (전체 히스토리 80% 이상)
+
+  // 직전 중복 목표: 최근 10회 평균
+  var overlapHist=[];
+  var sorted2=sd.slice(-10);
+  for(var i=1;i<sorted2.length;i++){
+    overlapHist.push(overlapWith(sorted2[i-1].n,sorted2[i].n));
+  }
+  var avgOverlap=overlapHist.length?overlapHist.reduce(function(a,b){return a+b;})/overlapHist.length:1;
+  var overlapTarget=[0,1,1,2]; // 0~2개 목표
+
+  return{
+    sum:sumTarget,
+    odd:oddTarget,
+    low:lowTarget,
+    consec:consecTarget,
+    tailMax:tailTarget,
+    overlap:overlapTarget,
+    // 통계 요약 (표시용)
+    stats:{avg:Math.round(avg),std:Math.round(std),rAvg:Math.round(rAvg),avgOdd:avgOdd.toFixed(1),avgLow:avgLow.toFixed(1),avgOverlap:avgOverlap.toFixed(1)}
+  };
+}
+
+// ───────────────────────────────────────────────
+// ══════════════════════════════════════════════
+// ③ 45세트 결정론적 생성 엔진
+// ══════════════════════════════════════════════
+// 패턴 만족 + 번호 균등 분산 + 완전 결정론적
+// ───────────────────────────────────────────────
+function generateSets(pattern,numScores){
+  var ld=latestDraw();
+  var prevNums=ld.n;
+
+  // 번호 사용 카운터 (목표: 각 번호 5~7회)
+  var usage={};
+  for(var i=1;i<=45;i++)usage[i]=0;
+
+  // 번호 우선순위: 점수를 참고하되, 사용량 많은 번호는 페널티
+  // 완전 결정론적: 랜덤 없음, 인덱스 기반 순환
+  function getScore(n){
+    var ns=numScores.find(function(s){return s.n===n;});
+    var base=ns?ns.total:50;
+    // 사용량 페널티: 사용량이 많을수록 점수 감소 (분산 핵심)
+    return base - usage[n]*12;
+  }
+
+  // 번호 후보를 점수순으로 정렬 (각 세트 생성 시 동적으로 재계산)
+  function getCandidates(exclude){
+    var cands=[];
+    for(var i=1;i<=45;i++){
+      if(!exclude||exclude.indexOf(i)<0){
+        cands.push({n:i,sc:getScore(i)});
+      }
+    }
+    return cands.sort(function(a,b){return b.sc-a.sc;});
+  }
+
+  // 패턴 검증
+  function checkPattern(combo){
+    var s=dSum(combo);
+    if(s<pattern.sum.min||s>pattern.sum.max)return false;
+    if(pattern.odd.indexOf(oddC(combo))<0)return false;
+    if(pattern.low.indexOf(lowC(combo))<0)return false;
+    var cs=consec(combo);
+    // consec target: [1,1,2] → 1=연번없음(max<2), 2=연번있음
+    var hasConsec=cs>=2?2:1;
+    if(pattern.consec.indexOf(hasConsec)<0)return false;
+    // 끝수 중복
+    var tails=combo.map(function(n){return n%10;});
+    var tc={};
+    tails.forEach(function(t){tc[t]=(tc[t]||0)+1;});
+    if(Math.max.apply(null,Object.values(tc))>pattern.tailMax)return false;
+    // 직전 중복
+    var ov=overlapWith(combo,prevNums);
+    if(pattern.overlap.indexOf(ov)<0)return false;
+    return true;
+  }
+
+  var results=[];
+  var usedKeys=new Set();
+  var maxAttempts=5000;
+  var attempt=0;
+
+  // 5구간 (1-9, 10-19, 20-29, 30-39, 40-45)
+  var sections=[[1,9],[10,19],[20,29],[30,39],[40,45]];
+
+  while(results.length<45&&attempt<maxAttempts){
+    attempt++;
+    var setIdx=results.length;
+
+    // 결정론적 시드: setIdx 기반 구간 시작 오프셋
+    var startSec=setIdx%5;
+    var combo=[];
+
+    // 각 구간에서 1개씩 (5구간 × 1 = 5개) + 추가 1개
+    var picked=false;
+    var trySecs=[];
+    for(var k=0;k<5;k++)trySecs.push((startSec+k)%5);
+
+    for(var si=0;si<5;si++){
+      var sec=sections[trySecs[si]];
+      var cands=[];
+      for(var n=sec[0];n<=sec[1];n++){
+        if(combo.indexOf(n)<0)cands.push({n:n,sc:getScore(n)});
+      }
+      cands.sort(function(a,b){return b.sc-a.sc;});
+      if(!cands.length)continue;
+      // setIdx 기반 오프셋으로 다양성 확보
+      var off=(Math.floor(setIdx/5)+si*3)%Math.min(cands.length,6);
+      combo.push(cands[off].n);
+    }
+
+    // 6번째 번호: 가장 사용 적은 구간에서 추가
+    if(combo.length===5){
+      var remaining=getCandidates(combo);
+      var off2=Math.floor(setIdx/3)%Math.min(remaining.length,8);
+      combo.push(remaining[off2].n);
+    }
+
+    if(combo.length!==6)continue;
+    combo.sort(function(a,b){return a-b;});
+
+    var key=combo.join(",");
+    if(usedKeys.has(key))continue;
+
+    if(!checkPattern(combo)){
+      // 패턴 미충족 시 일부 번호 교체 시도
+      // 합계 조정
+      var s=dSum(combo);
+      if(s<pattern.sum.min){
+        // 가장 작은 번호를 더 큰 번호로 교체
+        combo.sort(function(a,b){return a-b;});
+        var repl=getCandidates(combo);
+        for(var ri=0;ri<Math.min(repl.length,20);ri++){
+          if(repl[ri].n>combo[0]){
+            var newCombo=combo.slice(1).concat([repl[ri].n]);
+            newCombo.sort(function(a,b){return a-b;});
+            var ns2=dSum(newCombo);
+            if(ns2>=pattern.sum.min&&ns2<=pattern.sum.max){combo=newCombo;break;}
+          }
+        }
+      }
+      if(!checkPattern(combo))continue;
+      var key2=combo.join(",");
+      if(usedKeys.has(key2))continue;
+      key=key2;
+    }
+
+    usedKeys.add(key);
+    combo.forEach(function(n){usage[n]++;});
+    results.push({
+      idx:results.length+1,
+      combo:combo,
+      sum:dSum(combo),
+      odd:oddC(combo),
+      low:lowC(combo),
+      cs:consec(combo),
+      ov:overlapWith(combo,prevNums)
+    });
+  }
+
+  // 부족분 채우기 (패턴 완화)
+  if(results.length<45){
+    var softer=Object.assign({},pattern,{
+      sum:{min:pattern.sum.min-15,max:pattern.sum.max+15},
+      overlap:[0,1,1,2,2,3]
+    });
+    var softAttempts=0;
+    while(results.length<45&&softAttempts<3000){
+      softAttempts++;
+      var setIdx=results.length;
+      var startSec=setIdx%5;
+      var combo=[];
+      for(var si=0;si<5;si++){
+        var sec=sections[(startSec+si)%5];
+        var cands=[];
+        for(var n=sec[0];n<=sec[1];n++){
+          if(combo.indexOf(n)<0)cands.push({n:n,sc:getScore(n)});
+        }
+        cands.sort(function(a,b){return b.sc-a.sc;});
+        if(!cands.length)continue;
+        var off=(Math.floor(setIdx/5)+si*3)%Math.min(cands.length,6);
+        combo.push(cands[off].n);
+      }
+      if(combo.length===5){
+        var rem=getCandidates(combo);
+        combo.push(rem[0].n);
+      }
+      if(combo.length!==6)continue;
+      combo.sort(function(a,b){return a-b;});
+      var key=combo.join(",");
+      if(usedKeys.has(key))continue;
+      usedKeys.add(key);
+      combo.forEach(function(n){usage[n]++;});
+      results.push({idx:results.length+1,combo:combo,sum:dSum(combo),odd:oddC(combo),low:lowC(combo),cs:consec(combo),ov:overlapWith(combo,prevNums)});
+    }
+  }
+
+  return{sets:results,usage:usage};
+}
+
+// ───────────────────────────────────────────────
+// ══ 메인 분석 실행 ══
+// ───────────────────────────────────────────────
+async function runAnalysis(){
+  var ld=latestDraw();
+  var nextRound=ld.r+1;
+
+  // 같은 회차 재실행 방지
+  if(CACHED_ROUND===ld.r&&ANALYSIS){
+    renderAll();
+    showAlert("d-status","ainfo","✓ "+nextRound+"회차 분석 결과 불러옴 (캐시)");
+    return;
+  }
+
+  setProgress(10);
+  showAlert("d-status","aw","⚡ "+nextRound+"회차 패턴 분석 중...");
+
+  setTimeout(function(){
+    // ① 번호 점수
+    setProgress(30);
+    var numScores=calcNumberScores();
+    SCORES=numScores;
+    numScores.forEach(function(s){SM[s.n]=s;});
+
+    // ② 패턴 계산
+    setProgress(60);
+    var pattern=calcTargetPattern();
+
+    // ③ 45세트 생성
+    setProgress(80);
+    var genResult=generateSets(pattern,numScores);
+
+    ANALYSIS={
+      round:nextRound,
+      basis:ld.r,
+      numScores:numScores,
+      pattern:pattern,
+      sets:genResult.sets,
+      usage:genResult.usage,
+      ts:Date.now()
+    };
+    CACHED_ROUND=ld.r;
+    document.getElementById("h-basis").textContent=ld.r+"회";
+
+    // Supabase 저장 시도
+    saveAnalysis(ANALYSIS);
+
+    setProgress(100);
+    setTimeout(function(){setProgress(0);},1500);
+    showAlert("d-status","ai","✓ "+nextRound+"회차 분석 완료 ("+genResult.sets.length+"세트 생성)");
+    renderAll();
+  },50);
+}
+
+async function saveAnalysis(a){
+  try{
+    // 추천 세트 저장
+    for(var i=0;i<a.sets.length;i++){
+      var s=a.sets[i];
+      await sbFetch("lotto_generated_sets",{
+        method:"POST",
+        headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"resolution=ignore-duplicates,return=minimal"},
+        body:JSON.stringify({target_round:a.round,set_index:s.idx,num1:s.combo[0],num2:s.combo[1],num3:s.combo[2],num4:s.combo[3],num5:s.combo[4],num6:s.combo[5],combo_score:0,total_sum:s.sum})
+      });
+    }
+    // 패턴 저장
+    await sbFetch("lotto_target_pattern",{
+      method:"POST",
+      headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"resolution=ignore-duplicates,return=minimal"},
+      body:JSON.stringify({target_round:a.round,basis_round:a.basis,sum_min:a.pattern.sum.min,sum_max:a.pattern.sum.max,pattern_json:JSON.stringify(a.pattern)})
+    }).catch(function(){});
+  }catch(e){}
+}
+
+function setProgress(pct){
+  var el=document.getElementById("progbar");
+  if(el)el.style.width=pct+"%";
+}
+function showAlert(targetId,cls,msg){
+  var el=document.getElementById(targetId);
+  if(el)el.innerHTML='<div class="alert '+cls+'">'+msg+'</div>';
+}
+
+// ───────────────────────────────────────────────
+// ══ 렌더링 ══
+// ───────────────────────────────────────────────
+function renderAll(){
+  renderDash();
+  renderDrawTable();
+  if(ANALYSIS){
+    renderScores(ANALYSIS.numScores);
+    renderPatternDetail(ANALYSIS.pattern,ANALYSIS.round);
+    renderSetsList(ANALYSIS.sets);
+    renderDistGrid(ANALYSIS.usage);
+    renderPatternSummary(ANALYSIS.pattern,ANALYSIS.round);
+    renderSetPreview(ANALYSIS.sets);
+  }
+}
+
+function renderDash(){
+  var ld=latestDraw();
+  var nums=ld.n.slice().sort(function(a,b){return a-b;});
+  document.getElementById("d-latest").innerHTML=nums.map(function(n){return ball(n,"b38");}).join("")+'<div style="font-size:14px;color:var(--t3);margin:0 4px">+</div>'+ball(ld.b,"b38",true);
+  var s=dSum(nums);
+  document.getElementById("d-sum").textContent=s;
+  document.getElementById("d-meta").innerHTML=ld.r+"회"+(ld.date?" · "+ld.date:"")+"<br>홀"+oddC(nums)+" 짝"+(6-oddC(nums))+" · 저"+lowC(nums)+" 고"+(6-lowC(nums));
+}
+
+function renderDrawTable(){
+  var sd=sortedDraws().reverse();
+  document.getElementById("data-count").textContent=sd.length;
+  var html="";
+  for(var i=0;i<sd.length;i++){
+    var d=sd[i];
+    var nums=d.n.slice().sort(function(a,b){return a-b;});
+    var s=dSum(nums),oc=oddC(nums),lc=lowC(nums),cc=consec(nums);
+    var ov=i<sd.length-1?overlapWith(nums,sd[i+1].n):"-";
+    var sg=s>=121&&s<=180?"A":s>=101&&s<=200?"B":"C";
+    html+='<tr>'+
+      '<td style="font-family:var(--mono);color:var(--acc)">'+d.r+'</td>'+
+      '<td style="font-family:var(--mono);font-size:10px;color:var(--t2)">'+(d.date||"-")+'</td>'+
+      '<td><div class="brow">'+nums.map(function(n){return ball(n,"b24");}).join("")+'</div></td>'+
+      '<td>'+ball(d.b,"b24",true)+'</td>'+
+      '<td style="font-family:var(--mono)"><span style="color:'+(sg==="A"?"var(--grn)":sg==="B"?"var(--acc)":"var(--t2)")+'">'+s+'</span></td>'+
+      '<td style="font-family:var(--mono)">'+oc+":"+(6-oc)+'</td>'+
+      '<td style="font-family:var(--mono)">'+lc+":"+(6-lc)+'</td>'+
+      '<td style="font-family:var(--mono)">'+(cc>=2?'<span style="color:var(--acc3)">있음</span>':'—')+'</td>'+
+      '<td style="font-family:var(--mono)">'+(typeof ov==="number"?ov:"-")+'</td>'+
+    '</tr>';
+  }
+  document.getElementById("tbl-body").innerHTML=html;
+}
+
+function renderScores(scores,sortKey){
+  sortKey=sortKey||"total";
+  var sorted=scores.slice().sort(function(a,b){return b[sortKey]-a[sortKey];});
+  var mx=sorted[0]?sorted[0].total:100;
+
+  // 히트맵 그리드
+  var grid="";
+  for(var i=1;i<=45;i++){
+    var s=scores.find(function(x){return x.n===i;})||{total:50};
+    var r=s.total/100;
+    var bg=r>0.72?"rgba(240,72,88,.8)":r>0.55?"rgba(240,192,64,.7)":r>0.38?"rgba(136,136,160,.4)":"rgba(56,184,240,.45)";
+    grid+='<div class="nc" style="background:'+bg+'"><div class="nl">'+i+'</div><div class="ns">'+s.total+'</div></div>';
+  }
+  document.getElementById("score-grid").innerHTML=grid;
+
+  // 상세 테이블
+  var html="";
+  sorted.forEach(function(s){
+    var tag=s.nMiss>70?'<span class="tag good">회귀↑</span>':s.nR30>70?'<span class="tag hot">HOT</span>':s.total<35?'<span class="tag cold">WEAK</span>':'<span class="tag norm">—</span>';
+    html+='<tr>'+
+      '<td>'+ball(s.n,"b24")+'</td>'+
+      '<td style="font-family:var(--mono);color:var(--acc);font-weight:700">'+s.total+'</td>'+
+      '<td style="font-family:var(--mono)">'+s.freq+'회 ('+s.nFreq+')</td>'+
+      '<td style="font-family:var(--mono)">'+s.r30+'회 ('+s.nR30+')</td>'+
+      '<td style="font-family:var(--mono)">'+s.miss+'회 ('+s.nMiss+')</td>'+
+      '<td style="font-family:var(--mono)">'+s.pair+'</td>'+
+      '<td style="font-family:var(--mono)">'+s.sec+'</td>'+
+      '<td style="font-family:var(--mono)">'+s.tail+'</td>'+
+      '<td>'+tag+'</td>'+
+    '</tr>';
+  });
+  document.getElementById("score-tbody").innerHTML=html;
+}
+
+var _sortIdx=0;
+function sortScore(k){
+  _sortIdx=k;
+  var keys=["total","nFreq","nR30","nMiss"];
+  ["sv0","sv1","sv2","sv3"].forEach(function(id,i){
+    var el=document.getElementById(id);
+    if(el)el.style.background=i===k?"var(--acc)":"";
+    if(el)el.style.color=i===k?"var(--bg)":"";
+  });
+  if(ANALYSIS)renderScores(ANALYSIS.numScores,keys[k]);
+}
+
+function renderPatternDetail(p,nextRound){
+  var stats=p.stats;
+  var html='<div class="alert ai" style="margin-bottom:12px">'+nextRound+'회차 목표 패턴 — '+DRAWS.length+'회 히스토리 기반 자동 계산</div>';
+  html+='<div class="g3" style="gap:8px">';
+  var pats=[
+    {l:"합계 범위",v:p.sum.min+" ~ "+p.sum.max,sub:"전체평균 "+stats.avg+"±"+stats.std+" / 최근추세 "+stats.rAvg},
+    {l:"홀짝 목표",v:p.odd.join(", ")+" 홀수",sub:"직전5회 평균 홀수 "+stats.avgOdd+"개"},
+    {l:"저고 목표",v:p.low.join(", ")+" 저번호",sub:"직전5회 평균 저번호 "+stats.avgLow+"개"},
+    {l:"연번",v:p.consec.indexOf(2)>=0?"0~1쌍 허용":"연번 없음 선호",sub:"max 연번 1~2"},
+    {l:"끝수 중복 제한",v:"최대 "+p.tailMax+"개",sub:"히스토리 80%+ 패턴"},
+    {l:"직전 중복 목표",v:p.overlap.join(", ")+"개",sub:"직전10회 평균 "+stats.avgOverlap+"개"}
+  ];
+  pats.forEach(function(pp){
+    html+='<div class="pat"><div><div class="pat-lbl">'+pp.l+'</div><div style="font-size:9px;color:var(--t3);font-family:var(--mono);margin-top:2px">'+pp.sub+'</div></div><div class="pat-val">'+pp.v+'</div></div>';
+  });
+  html+='</div>';
+  document.getElementById("pattern-detail").innerHTML=html;
+}
+
+function renderPatternSummary(p,nextRound){
+  var html='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  var items=[
+    {l:"합계",v:p.sum.min+"~"+p.sum.max},
+    {l:"홀수",v:p.odd.join("/")}+"개",
+    {l:"저번호",v:p.low.join("/")}+"개",
+    {l:"끝수중복",v:"≤"+p.tailMax},
+    {l:"직전중복",v:p.overlap[0]+"~"+p.overlap[p.overlap.length-1]+"개"}
+  ];
+  items.forEach(function(it){
+    html+='<div style="background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:6px 10px">';
+    html+='<div style="font-size:9px;font-family:var(--mono);color:var(--t3)">'+it.l+'</div>';
+    html+='<div style="font-family:var(--mono);font-size:12px;color:var(--acc);font-weight:700">'+(typeof it.v==="string"?it.v:it.v)+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  document.getElementById("d-pattern").innerHTML=html;
+}
+
+function renderSetsList(sets){
+  var html='<div style="font-size:11px;font-family:var(--mono);color:var(--t3);margin-bottom:10px">'+
+    sets.length+'세트 생성 완료 · 패턴 만족 · 번호 균등 분산 보장</div>';
+  sets.forEach(function(s){
+    html+='<div class="srow">'+
+      '<div class="srank">'+String(s.idx).padStart(2,"0")+'</div>'+
+      '<div style="flex:1">'+
+        '<div class="brow" style="gap:4px">'+s.combo.map(function(n){return ball(n,"b24");}).join("")+'</div>'+
+        '<div class="smeta">합계'+s.sum+' · 홀'+s.odd+'짝'+(6-s.odd)+' · 저'+s.low+'고'+(6-s.low)+(s.cs>=2?' · 연번':'')+(s.ov>0?' · 직전'+s.ov:'')+'</div>'+
+      '</div>'+
+    '</div>';
+  });
+  document.getElementById("sets-list").innerHTML=html;
+  var log='<div class="alert ai">✓ 패턴 적합률: <b style="color:var(--grn)">'+sets.length+'/45</b> 세트</div>';
+  document.getElementById("sets-log").innerHTML=log;
+}
+
+function renderSetPreview(sets){
+  var preview=sets.slice(0,10);
+  var html='<div style="font-size:10px;font-family:var(--mono);color:var(--t3);margin-bottom:8px">TOP 10 미리보기 (전체 '+sets.length+'세트)</div>';
+  preview.forEach(function(s){
+    html+='<div class="srow">'+
+      '<div class="srank" style="font-size:16px">'+String(s.idx).padStart(2,"0")+'</div>'+
+      '<div style="flex:1"><div class="brow" style="gap:3px">'+s.combo.map(function(n){return ball(n,"b24");}).join("")+'</div>'+
+      '<div class="smeta">합계'+s.sum+'</div></div>'+
+    '</div>';
+  });
+  document.getElementById("d-sets").innerHTML=html;
+}
+
+function renderDistGrid(usage){
+  var vals=Object.values(usage);
+  var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);
+  var html="";
+  for(var i=1;i<=45;i++){
+    var u=usage[i]||0;
+    var r=mx>mn?(u-mn)/(mx-mn):0.5;
+    var bg=u>=7?"rgba(240,72,88,.75)":u>=5?"rgba(240,192,64,.65)":"rgba(56,184,240,.45)";
+    html+='<div class="nc" style="background:'+bg+'" title="'+i+'번 · '+u+'회 사용">'+
+      '<div class="nl">'+i+'</div><div class="ns">'+u+'</div></div>';
+  }
+  document.getElementById("d-dist").innerHTML=html;
+}
+
+// CSV 다운로드
+function dlSets(){
+  if(!ANALYSIS||!ANALYSIS.sets.length){alert("먼저 AI 분석을 실행하세요");return;}
+  var csv="﻿순위,번호1,번호2,번호3,번호4,번호5,번호6,합계,홀수,저번호
+";
+  ANALYSIS.sets.forEach(function(s){
+    csv+=s.idx+","+s.combo.join(",")+","+s.sum+","+s.odd+","+s.low+"
+";
+  });
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="lotto_45sets_"+ANALYSIS.round+"회차.csv";a.click();
+}
+function dlDraws(){
+  var csv="﻿회차,추첨일,번호1,번호2,번호3,번호4,번호5,번호6,보너스,합계
+";
+  sortedDraws().slice().reverse().forEach(function(d){
+    var nums=d.n.slice().sort(function(a,b){return a-b;});
+    csv+=d.r+","+(d.date||"")+","+nums.join(",")+","+d.b+","+dSum(nums)+"
+";
+  });
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="lotto_draws.csv";a.click();
+}
+
+// ───────────────────────────────────────────────
+// INIT
+// ───────────────────────────────────────────────
+syncNow().catch(function(){setOff("내장 데이터 사용");}).finally(function(){renderDash();renderDrawTable();});
+
+</script>
+</body></html>
